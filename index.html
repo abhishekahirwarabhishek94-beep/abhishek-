@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Flappy Bird Clone</title>
+  <meta name="description" content="A classic Flappy Bird arcade game built with HTML5 Canvas, physics, score tracking, and smooth animations in a single file." />
+  <meta property="og:title" content="Flappy Bird Clone" />
+  <meta property="og:description" content="A classic Flappy Bird arcade game built with HTML5 Canvas, physics, score tracking, and smooth animations in a single file." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 30%, #1e293b 0%, #0b0f19 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      overflow-x: hidden;
+      color: #f1f5f9;
+      padding: 12px;
+    }
+
+    .main-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-width: 100%;
+    }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 360px;
+      max-width: 100%;
+      padding: 0 4px;
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #facc15 0%, #fb923c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #cbd5e1;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      font-weight: 500;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .btn-icon:active {
+      transform: translateY(0);
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 360px;
+      height: 560px;
+      border-radius: 18px;
+      box-shadow: 
+        0 20px 45px -10px rgba(0, 0, 0, 0.7),
+        0 0 0 2px rgba(255, 255, 255, 0.1),
+        inset 0 0 20px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      background: #4ec0ca;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+
+    .controls-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+      flex-wrap: wrap;
+    }
+
+    .key-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-size: 11px;
+      color: #e2e8f0;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .stats-footer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .speed-tag {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #10b981;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-height: 680px) {
+      .canvas-container {
+        height: 500px;
+        width: 320px;
+      }
+      .header-bar {
+        width: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-wrapper">
+    <div class="header-bar">
+      <div class="header-title">
+        <span>🐠</span>
+        <span>Flappy Fish</span>
+      </div>
+      <div class="header-actions">
+        <button id="speedToggleBtn" class="btn-icon" title="Toggle Game Speed Mode">
+          <span id="speedIcon">⚡</span>
+          <span id="speedLabel">Normal</span>
+        </button>
+        <button id="soundToggleBtn" class="btn-icon" title="Toggle Sound">
+          <span id="soundIcon">🔊</span>
+        </button>
+        <button id="copyCodeBtn" class="btn-icon" title="Copy Single-File HTML">
+          <span>📋</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+      <canvas id="gameCanvas" width="360" height="560"></canvas>
+    </div>
+
+    <div class="controls-hint">
+      <span><span class="key-badge">Space</span> or <span class="key-badge">▲</span> or <span class="key-badge">Click</span> / <span class="key-badge">Tap</span> to swim</span>
+    </div>
+
+    <div class="stats-footer">
+      <span id="bestScoreText">Best: 0</span>
+      <span>•</span>
+      <span class="speed-tag" id="currentSpeedTag">Normal Speed</span>
+      <span>•</span>
+      <span>HTML5 Canvas</span>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">HTML copied to clipboard!</div>
+
+  <script>
+    (function () {
+      // --- Web Audio API (Synthesized Retro Sound Effects, zero external assets) ---
+      let audioCtx = null;
+      let soundEnabled = true;
+
+      function getAudioContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      function playSound(type) {
+        if (!soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+
+        if (type === 'flap') {
+          // Soft buoyant swoosh
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(540, now + 0.09);
+
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'score') {
+          // Bright positive chime
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc1.type = 'triangle';
+          osc2.type = 'sine';
+
+          osc1.frequency.setValueAtTime(587.33, now); // D5
+          osc1.frequency.setValueAtTime(880.00, now + 0.08); // A5
+          osc2.frequency.setValueAtTime(1174.66, now + 0.08); // D6
+
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc1.start(now);
+          osc2.start(now + 0.08);
+          osc1.stop(now + 0.28);
+          osc2.stop(now + 0.28);
+        } else if (type === 'hit') {
+          // Impact punch / crunch
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.18);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        }
+      }
+
+      // --- Speed Presets (Normal Speed is calibrated for comfortable reaction & smooth gameplay) ---
+      const SPEED_MODES = [
+        {
+          id: 'normal',
+          name: 'Normal',
+          icon: '⚡',
+          pipeSpeed: 1.4,
+          pipeGap: 138,
+          spawnInterval: 126, // ~2.1 seconds at 60fps (~176px spacing)
+          gravity: 0.23,
+          jumpPower: -5.3,
+          tagColor: '#4ade80',
+          tagBg: 'rgba(34, 197, 94, 0.15)',
+          tagBorder: 'rgba(34, 197, 94, 0.3)'
+        },
+        {
+          id: 'slow',
+          name: 'Easy/Slow',
+          icon: '🐢',
+          pipeSpeed: 1.05,
+          pipeGap: 148,
+          spawnInterval: 145, // very relaxed
+          gravity: 0.18,
+          jumpPower: -4.5,
+          tagColor: '#38bdf8',
+          tagBg: 'rgba(56, 189, 248, 0.15)',
+          tagBorder: 'rgba(56, 189, 248, 0.3)'
+        },
+        {
+          id: 'fast',
+          name: 'Fast',
+          icon: '🚀',
+          pipeSpeed: 2.0,
+          pipeGap: 125,
+          spawnInterval: 98,
+          gravity: 0.34,
+          jumpPower: -6.8,
+          tagColor: '#fb923c',
+          tagBg: 'rgba(251, 146, 60, 0.15)',
+          tagBorder: 'rgba(251, 146, 60, 0.3)'
+        }
+      ];
+
+      let currentSpeedIndex = 0; // Starts at Normal
+
+      function getSpeedConfig() {
+        return SPEED_MODES[currentSpeedIndex];
+      }
+
+      function applySpeedConfig() {
+        const config = getSpeedConfig();
+        bird.gravity = config.gravity;
+        bird.jumpPower = config.jumpPower;
+        pipes.speed = config.pipeSpeed;
+        pipes.gap = config.pipeGap;
+        pipes.spawnInterval = config.spawnInterval;
+
+        const speedLabel = document.getElementById('speedLabel');
+        const speedIcon = document.getElementById('speedIcon');
+        const currentSpeedTag = document.getElementById('currentSpeedTag');
+
+        speedLabel.textContent = config.name;
+        speedIcon.textContent = config.icon;
+        currentSpeedTag.textContent = config.name + ' Speed';
+        currentSpeedTag.style.color = config.tagColor;
+        currentSpeedTag.style.backgroundColor = config.tagBg;
+        currentSpeedTag.style.borderColor = config.tagBorder;
+      }
+
+      // --- UI Elements & Event Handlers ---
+      const soundToggleBtn = document.getElementById('soundToggleBtn');
+      const soundIcon = document.getElementById('soundIcon');
+      const speedToggleBtn = document.getElementById('speedToggleBtn');
+      const bestScoreText = document.getElementById('bestScoreText');
+      const copyCodeBtn = document.getElementById('copyCodeBtn');
+      const toast = document.getElementById('toast');
+
+      soundToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        soundEnabled = !soundEnabled;
+        soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+      });
+
+      speedToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        currentSpeedIndex = (currentSpeedIndex + 1) % SPEED_MODES.length;
+        applySpeedConfig();
+      });
+
+      copyCodeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const htmlContent = '<!doctype html>\n' + document.documentElement.outerHTML;
+        navigator.clipboard.writeText(htmlContent).then(() => {
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 2000);
+        }).catch(() => {
+          alert('Copied HTML to clipboard!');
+        });
+      });
+
+      // --- Canvas Setup with High-DPI (Retina) Crispness ---
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const container = document.getElementById('canvasContainer');
+
+      const V_WIDTH = 360;
+      const V_HEIGHT = 560;
+      const GROUND_HEIGHT = 90;
+      const GROUND_Y = V_HEIGHT - GROUND_HEIGHT; // 470
+
+      let dpr = window.devicePixelRatio || 1;
+      function setupCanvasScaling() {
+        dpr = window.devicePixelRatio || 1;
+        canvas.width = V_WIDTH * dpr;
+        canvas.height = V_HEIGHT * dpr;
+        ctx.resetTransform();
+        ctx.scale(dpr, dpr);
+      }
+      setupCanvasScaling();
+      window.addEventListener('resize', setupCanvasScaling);
+
+      // --- Game Constants & State ---
+      const STATES = {
+        READY: 0,
+        PLAYING: 1,
+        GAME_OVER: 2
+      };
+
+      let currentState = STATES.READY;
+      let score = 0;
+      let bestScore = 0;
+      let isNewHighScore = false;
+      let frames = 0;
+
+      // Screen flash & camera shake
+      let flashAlpha = 0;
+      let shakeTime = 0;
+
+      // Load best score safely
+      try {
+        const saved = localStorage.getItem('flappy_bird_best_score');
+        if (saved !== null) {
+          bestScore = parseInt(saved, 10) || 0;
+        }
+      } catch (e) {}
+      bestScoreText.textContent = 'Best: ' + bestScore;
+
+      // --- Fish Physics & Properties ---
+      const bird = {
+        x: 88,
+        y: 240,
+        radius: 14,
+        collisionRadius: 11,
+        velocity: 0,
+        gravity: 0.23,
+        jumpPower: -5.3,
+        rotation: 0,
+        finAngle: 0,
+        finSpeed: 0.2,
+
+        reset: function () {
+          this.x = 88;
+          this.y = 240;
+          this.velocity = 0;
+          this.rotation = 0;
+          this.finAngle = 0;
+        },
+
+        flap: function () {
+          this.velocity = this.jumpPower;
+          playSound('flap');
+          createFeathers(this.x - 14, this.y + 2);
+        },
+
+        update: function () {
+          // Smooth physics
+          this.velocity += this.gravity;
+          this.y += this.velocity;
+
+          // Rotation interpolation: gentle swim pitch
+          if (this.velocity < 0) {
+            this.rotation = Math.max(-0.45, this.velocity * 0.08);
+          } else {
+            this.rotation = Math.min(1.15, this.rotation + 0.035);
+          }
+
+          // Swimming fin & tail oscillation
+          this.finAngle += this.finSpeed;
+
+          // Ceiling collision
+          if (this.y - this.collisionRadius <= 0) {
+            this.y = this.collisionRadius;
+            this.velocity = 0;
+          }
+
+          // Ground collision
+          if (this.y + this.collisionRadius >= GROUND_Y) {
+            this.y = GROUND_Y - this.collisionRadius;
+            return true; // Hit ground
+          }
+          return false;
+        },
+
+        draw: function () {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rotation);
+
+          const finWiggle = Math.sin(this.finAngle) * 3.5;
+
+          // 1. Caudal Tail Fin (Animated swimming waggle)
+          ctx.save();
+          ctx.translate(-13, 0);
+          ctx.rotate(finWiggle * 0.08);
+
+          const tailGrad = ctx.createLinearGradient(-15, 0, 0, 0);
+          tailGrad.addColorStop(0, '#f97316');
+          tailGrad.addColorStop(0.5, '#fb923c');
+          tailGrad.addColorStop(1, '#ea580c');
+          ctx.fillStyle = tailGrad;
+
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.quadraticCurveTo(-7, -10, -15, -12);
+          ctx.quadraticCurveTo(-10, 0, -15, 12);
+          ctx.quadraticCurveTo(-7, 10, 0, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#c2410c';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+
+          // Tail fin white decorative band
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(-5, -6);
+          ctx.quadraticCurveTo(-8, 0, -5, 6);
+          ctx.quadraticCurveTo(-7, 0, -5, -6);
+          ctx.fill();
+
+          // Fin ray accents
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-12, -7);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-13, 0);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-12, 7);
+          ctx.stroke();
+
+          ctx.restore();
+
+          // 2. Dorsal Fin (Top wavy fin)
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.moveTo(-9, -9);
+          ctx.quadraticCurveTo(-5, -18, 3, -15);
+          ctx.quadraticCurveTo(8, -12, 9, -8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#c2410c';
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+
+          // Dorsal fin white edge trim
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(-7, -11);
+          ctx.quadraticCurveTo(-4, -16, 4, -13);
+          ctx.stroke();
+
+          // 3. Ventral / Pelvic Fin (Bottom small fin)
+          ctx.fillStyle = '#ea580c';
+          ctx.beginPath();
+          ctx.moveTo(-5, 9);
+          ctx.quadraticCurveTo(-2, 16, 4, 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#9a3412';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+
+          // 4. Fish Main Body (Vibrant orange/gold tropical fish)
+          const bodyGrad = ctx.createRadialGradient(4, -3, 2, 0, 0, 18);
+          bodyGrad.addColorStop(0, '#fdba74');
+          bodyGrad.addColorStop(0.35, '#fb923c');
+          bodyGrad.addColorStop(0.75, '#f97316');
+          bodyGrad.addColorStop(1, '#c2410c');
+
+          ctx.fillStyle = bodyGrad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 16, 12.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#9a3412';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+
+          // 5. Classic White Tropical Fish Stripes with dark borders
+          // Middle Body Curved Stripe
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(-3, -12);
+          ctx.quadraticCurveTo(-1, 0, -3, 12);
+          ctx.lineTo(2, 12);
+          ctx.quadraticCurveTo(4, 0, 2, -12);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(-3, -12);
+          ctx.quadraticCurveTo(-1, 0, -3, 12);
+          ctx.moveTo(2, 12);
+          ctx.quadraticCurveTo(4, 0, 2, -12);
+          ctx.stroke();
+
+          // Tail Base Vertical Stripe
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(-11, -8);
+          ctx.lineTo(-9, -8);
+          ctx.lineTo(-9, 8);
+          ctx.lineTo(-11, 8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // 6. Belly Soft Tint
+          ctx.fillStyle = 'rgba(255, 247, 237, 0.4)';
+          ctx.beginPath();
+          ctx.ellipse(2, 5, 9, 5, 0.1, 0, Math.PI);
+          ctx.fill();
+
+          // 7. Pectoral Fin (Animated side fin flutter)
+          const pectAngle = Math.sin(this.finAngle * 1.5) * 0.35;
+          ctx.save();
+          ctx.translate(-1, 2);
+          ctx.rotate(pectAngle);
+          ctx.fillStyle = 'rgba(254, 215, 170, 0.92)';
+          ctx.beginPath();
+          ctx.ellipse(-3, 0, 7, 4.5, -0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+          // Inner fin rib
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-6, 0);
+          ctx.stroke();
+          ctx.restore();
+
+          // 8. Gill Curved Line
+          ctx.strokeStyle = '#9a3412';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.arc(5, 0, 9, Math.PI * 0.75, Math.PI * 1.25);
+          ctx.stroke();
+
+          // 9. Big Cute Cartoon Eye
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(8, -3, 5.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#431407';
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+
+          // Pupil looking in direction of swim
+          const lookX = this.velocity < 0 ? 9.3 : 8.6;
+          const lookY = this.velocity > 2 ? -1.8 : -3.2;
+
+          // Iris (Cyan / Ocean blue ring)
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(lookX, lookY, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Dark Pupil
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(lookX, lookY, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Eye reflections (cute twin glints)
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(lookX + 0.9, lookY - 0.9, 1.1, 0, Math.PI * 2);
+          ctx.arc(lookX - 0.8, lookY + 0.9, 0.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 10. Cute Pouty Fish Mouth / Lips
+          ctx.fillStyle = '#ea580c';
+          if (this.velocity < -1) {
+            // Mouth open in circle ("O" blowing bubbles when flapping!)
+            ctx.beginPath();
+            ctx.arc(17, 2.5, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#7c2d12';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+            // Mouth cavity
+            ctx.fillStyle = '#7f1d1d';
+            ctx.beginPath();
+            ctx.arc(17, 2.5, 1.4, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // Puckered kissy fish lips
+            ctx.beginPath();
+            ctx.ellipse(16.5, 1.2, 2.4, 1.5, 0.2, 0, Math.PI * 2);
+            ctx.ellipse(16.5, 3.6, 2.2, 1.4, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#9a3412';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
+      };
+
+      // --- Pipes Obstacles ---
+      const pipes = {
+        items: [],
+        width: 54,
+        collarExtra: 6,
+        collarHeight: 24,
+        gap: 138,
+        speed: 1.4,
+        spawnInterval: 126, // frames
+
+        reset: function () {
+          this.items = [];
+        },
+
+        update: function () {
+          // Spawn new pipe pair continuously with comfortable gap & spacing
+          if (frames % this.spawnInterval === 0) {
+            const minTop = 55;
+            const maxTop = GROUND_Y - this.gap - 55;
+            const topHeight = Math.floor(Math.random() * (maxTop - minTop + 1)) + minTop;
+
+            this.items.push({
+              x: V_WIDTH,
+              top: topHeight,
+              bottom: topHeight + this.gap,
+              passed: false
+            });
+          }
+
+          // Move pipes & test collisions
+          for (let i = 0; i < this.items.length; i++) {
+            const p = this.items[i];
+            p.x -= this.speed;
+
+            // Score detection when bird successfully crosses pipe center
+            if (!p.passed && bird.x > p.x + this.width / 2) {
+              p.passed = true;
+              score++;
+              playSound('score');
+              createScoreSparkles(p.x + this.width / 2, (p.top + p.bottom) / 2);
+            }
+
+            // Pipe collision with bird
+            const bx = bird.x;
+            const by = bird.y;
+            const br = bird.collisionRadius;
+
+            // Top pipe rectangle
+            if (bx + br > p.x && bx - br < p.x + this.width) {
+              if (by - br < p.top) {
+                return true; // Collided with top pipe
+              }
+              if (by + br > p.bottom) {
+                return true; // Collided with bottom pipe
+              }
+            }
+          }
+
+          // Remove off-screen pipes
+          if (this.items.length > 0 && this.items[0].x + this.width < -10) {
+            this.items.shift();
+          }
+
+          return false;
+        },
+
+        draw: function () {
+          for (let i = 0; i < this.items.length; i++) {
+            const p = this.items[i];
+
+            // 1. TOP PIPE
+            this.drawSinglePipe(p.x, 0, this.width, p.top, true);
+
+            // 2. BOTTOM PIPE
+            const bottomHeight = GROUND_Y - p.bottom;
+            this.drawSinglePipe(p.x, p.bottom, this.width, bottomHeight, false);
+          }
+        },
+
+        drawSinglePipe: function (x, y, w, h, isTop) {
+          if (h <= 0) return;
+
+          // Main Pipe Shaft
+          const pipeGrad = ctx.createLinearGradient(x, 0, x + w, 0);
+          pipeGrad.addColorStop(0, '#559c2a');
+          pipeGrad.addColorStop(0.2, '#85d93b');
+          pipeGrad.addColorStop(0.65, '#73bf2e');
+          pipeGrad.addColorStop(1, '#3b6e1b');
+
+          ctx.fillStyle = pipeGrad;
+          ctx.fillRect(x, y, w, h);
+
+          // Pipe shaft outline
+          ctx.strokeStyle = '#274b12';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y, w, h);
+
+          // Pipe Cap Collar (Lip)
+          const capW = w + this.collarExtra * 2;
+          const capH = this.collarHeight;
+          const capX = x - this.collarExtra;
+          const capY = isTop ? y + h - capH : y;
+
+          const capGrad = ctx.createLinearGradient(capX, 0, capX + capW, 0);
+          capGrad.addColorStop(0, '#5ea82e');
+          capGrad.addColorStop(0.2, '#96ea44');
+          capGrad.addColorStop(0.65, '#73bf2e');
+          capGrad.addColorStop(1, '#2f5716');
+
+          ctx.fillStyle = capGrad;
+          ctx.beginPath();
+          ctx.roundRect(capX, capY, capW, capH, 3);
+          ctx.fill();
+          ctx.strokeStyle = '#274b12';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Collar highlight streak
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+          ctx.fillRect(capX + 5, capY + 3, 4, capH - 6);
+        }
+      };
+
+      // --- Background & Environment ---
+      let groundOffset = 0;
+      const clouds = [
+        { x: 30, y: 70, scale: 1.1, speed: 0.2 },
+        { x: 180, y: 120, scale: 0.8, speed: 0.15 },
+        { x: 300, y: 60, scale: 0.95, speed: 0.18 }
+      ];
+
+      function updateEnvironment() {
+        if (currentState !== STATES.GAME_OVER) {
+          groundOffset = (groundOffset + pipes.speed) % 24;
+
+          // Scroll clouds gently
+          for (let i = 0; i < clouds.length; i++) {
+            clouds[i].x -= clouds[i].speed;
+            if (clouds[i].x < -100) {
+              clouds[i].x = V_WIDTH + 40;
+              clouds[i].y = 40 + Math.random() * 110;
+            }
+          }
+        }
+      }
+
+      function drawEnvironment() {
+        // Sky gradient
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+        skyGrad.addColorStop(0, '#4ec0ca');
+        skyGrad.addColorStop(0.75, '#7ee1eb');
+        skyGrad.addColorStop(1, '#c8f3f8');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, V_WIDTH, GROUND_Y);
+
+        // Distant hills silhouettes
+        ctx.fillStyle = 'rgba(125, 203, 172, 0.55)';
+        ctx.beginPath();
+        ctx.moveTo(0, GROUND_Y);
+        ctx.bezierCurveTo(60, GROUND_Y - 45, 120, GROUND_Y - 35, 180, GROUND_Y);
+        ctx.bezierCurveTo(240, GROUND_Y - 50, 310, GROUND_Y - 30, V_WIDTH, GROUND_Y);
+        ctx.lineTo(V_WIDTH, GROUND_Y);
+        ctx.lineTo(0, GROUND_Y);
+        ctx.fill();
+
+        // Fluffy Clouds
+        for (let i = 0; i < clouds.length; i++) {
+          drawCloud(clouds[i].x, clouds[i].y, clouds[i].scale);
+        }
+
+        // Midground bushes
+        ctx.fillStyle = '#65b86d';
+        for (let bx = 0; bx < V_WIDTH + 30; bx += 36) {
+          ctx.beginPath();
+          ctx.arc(bx, GROUND_Y, 18, Math.PI, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawCloud(cx, cy, s) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(s, s);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.arc(14, -6, 14, 0, Math.PI * 2);
+        ctx.arc(28, 0, 12, 0, Math.PI * 2);
+        ctx.arc(14, 6, 12, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawGround() {
+        // Ground body (warm retro sand)
+        ctx.fillStyle = '#ded895';
+        ctx.fillRect(0, GROUND_Y, V_WIDTH, GROUND_HEIGHT);
+
+        // Diagonal striped soil texture that scrolls at calibrated speed
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, GROUND_Y + 14, V_WIDTH, GROUND_HEIGHT - 14);
+        ctx.clip();
+        ctx.strokeStyle = '#c5bc73';
+        ctx.lineWidth = 3;
+        for (let x = -30 - groundOffset; x < V_WIDTH + 40; x += 18) {
+          ctx.beginPath();
+          ctx.moveTo(x, GROUND_Y + 14);
+          ctx.lineTo(x - 14, GROUND_Y + GROUND_HEIGHT);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Top Grass Ribbon
+        ctx.fillStyle = '#73bf2e';
+        ctx.fillRect(0, GROUND_Y, V_WIDTH, 14);
+
+        // Grass top highlight
+        ctx.fillStyle = '#9fe855';
+        ctx.fillRect(0, GROUND_Y, V_WIDTH, 3);
+
+        // Dark dividing line between grass and ground
+        ctx.strokeStyle = '#558822';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, GROUND_Y);
+        ctx.lineTo(V_WIDTH, GROUND_Y);
+        ctx.moveTo(0, GROUND_Y + 14);
+        ctx.lineTo(V_WIDTH, GROUND_Y + 14);
+        ctx.stroke();
+      }
+
+      // --- Particles (Underwater air bubbles on swim, Stars on score) ---
+      const particles = [];
+      function createFeathers(x, y) {
+        for (let i = 0; i < 4; i++) {
+          particles.push({
+            x: x + (Math.random() - 0.5) * 6,
+            y: y + (Math.random() - 0.5) * 6,
+            vx: -Math.random() * 1.6 - 0.4,
+            vy: -Math.random() * 1.6 - 0.6, // floats upwards like water bubbles
+            size: Math.random() * 3 + 2.5,
+            alpha: 0.9,
+            isBubble: true
+          });
+        }
+      }
+
+      function createScoreSparkles(x, y) {
+        for (let i = 0; i < 8; i++) {
+          const angle = (Math.PI * 2 * i) / 8;
+          const spd = Math.random() * 2.2 + 1.2;
+          particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            size: Math.random() * 3 + 2,
+            alpha: 1,
+            color: '#facc15',
+            isBubble: false
+          });
+        }
+      }
+
+      function updateAndDrawParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha -= 0.025;
+
+          if (p.alpha <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+
+          if (p.isBubble) {
+            // Translucent cyan bubble
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Shiny bubble border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Bubble highlight gleam
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(p.x - p.size * 0.35, p.y - p.size * 0.35, p.size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = p.color || '#facc15';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // --- Overlay UI: Start / Ready Screen ---
+      function drawReadyScreen() {
+        // Floating gentle bobbing bird/fish
+        bird.y = 230 + Math.sin(frames * 0.05) * 6;
+        bird.rotation = 0;
+        bird.draw();
+
+        // "GET READY" Title Banner
+        ctx.save();
+        ctx.textAlign = 'center';
+
+        // Title text
+        ctx.font = '900 32px system-ui, sans-serif';
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = '#000000';
+        ctx.strokeText('FLAPPY FISH', V_WIDTH / 2, 140);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('FLAPPY FISH', V_WIDTH / 2, 140);
+
+        // Tap Icon / Guide Box
+        const boxY = 300;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.beginPath();
+        ctx.roundRect(V_WIDTH / 2 - 110, boxY, 220, 80, 12);
+        ctx.fill();
+
+        ctx.font = '700 16px system-ui, sans-serif';
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText('TAP OR PRESS SPACE', V_WIDTH / 2, boxY + 34);
+
+        ctx.font = '500 13px system-ui, sans-serif';
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText('TO SWIM & DIVE', V_WIDTH / 2, boxY + 58);
+
+        // High Score reminder
+        if (bestScore > 0) {
+          ctx.font = '600 14px system-ui, sans-serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText('BEST SCORE: ' + bestScore, V_WIDTH / 2, 430);
+        }
+
+        ctx.restore();
+      }
+
+      // --- Live Score HUD during PLAYING ---
+      function drawPlayingHUD() {
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.font = '900 48px system-ui, sans-serif';
+
+        // Thick outline for arcade contrast
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = '#000000';
+        ctx.strokeText(score.toString(), V_WIDTH / 2, 75);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(score.toString(), V_WIDTH / 2, 75);
+        ctx.restore();
+      }
+
+      // --- Game Over Overlay Screen ---
+      function drawGameOverScreen() {
+        ctx.save();
+        ctx.textAlign = 'center';
+
+        // Semi-translucent dark backdrop over the frozen scene
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+        // GAME OVER Banner
+        ctx.font = '900 36px system-ui, sans-serif';
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = '#7f1d1d';
+        ctx.strokeText('GAME OVER', V_WIDTH / 2, 130);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText('GAME OVER', V_WIDTH / 2, 130);
+
+        // Scorecard Panel
+        const cardX = V_WIDTH / 2 - 130;
+        const cardY = 165;
+        const cardW = 260;
+        const cardH = 150;
+
+        // Card background
+        ctx.fillStyle = '#ded895';
+        ctx.beginPath();
+        ctx.roundRect(cardX, cardY, cardW, cardH, 12);
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#558822';
+        ctx.stroke();
+
+        // Score row
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#1e293b';
+        ctx.font = '700 15px system-ui, sans-serif';
+        ctx.fillText('SCORE', cardX + 24, cardY + 45);
+
+        ctx.textAlign = 'right';
+        ctx.font = '900 28px system-ui, sans-serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(score.toString(), cardX + cardW - 24, cardY + 48);
+
+        // Divider
+        ctx.strokeStyle = '#c5bc73';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cardX + 20, cardY + 70);
+        ctx.lineTo(cardX + cardW - 20, cardY + 70);
+        ctx.stroke();
+
+        // Best row
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#1e293b';
+        ctx.font = '700 15px system-ui, sans-serif';
+        ctx.fillText('BEST', cardX + 24, cardY + 110);
+
+        ctx.textAlign = 'right';
+        ctx.font = '900 28px system-ui, sans-serif';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(bestScore.toString(), cardX + cardW - 24, cardY + 113);
+
+        // New High Score Badge
+        if (isNewHighScore) {
+          ctx.save();
+          ctx.fillStyle = '#ea580c';
+          ctx.beginPath();
+          ctx.roundRect(cardX + 75, cardY + 95, 46, 20, 4);
+          ctx.fill();
+          ctx.textAlign = 'center';
+          ctx.font = '900 11px system-ui, sans-serif';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText('NEW!', cardX + 98, cardY + 109);
+          ctx.restore();
+        }
+
+        // Restart Prompt (pulsing opacity)
+        const pulse = 0.7 + Math.sin(frames * 0.1) * 0.3;
+        ctx.globalAlpha = pulse;
+        ctx.textAlign = 'center';
+
+        // Button background
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.roundRect(V_WIDTH / 2 - 110, 345, 220, 50, 10);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#15803d';
+        ctx.stroke();
+
+        ctx.font = '800 16px system-ui, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('CLICK TO RESTART', V_WIDTH / 2, 376);
+
+        ctx.restore();
+      }
+
+      // --- Game Over Trigger & Cleanup ---
+      function triggerGameOver() {
+        if (currentState === STATES.GAME_OVER) return;
+
+        currentState = STATES.GAME_OVER;
+        playSound('hit');
+
+        // Trigger flash & shake
+        flashAlpha = 0.6;
+        shakeTime = 10;
+
+        // Check and persist new best score
+        if (score > bestScore) {
+          bestScore = score;
+          isNewHighScore = true;
+          try {
+            localStorage.setItem('flappy_bird_best_score', bestScore.toString());
+          } catch (e) {}
+          bestScoreText.textContent = 'Best: ' + bestScore;
+        } else {
+          isNewHighScore = false;
+        }
+      }
+
+      function resetGame() {
+        score = 0;
+        frames = 0;
+        bird.reset();
+        pipes.reset();
+        particles.length = 0;
+        flashAlpha = 0;
+        shakeTime = 0;
+        currentState = STATES.READY;
+      }
+
+      // --- Universal Action Input (Flap / Start / Restart) ---
+      function handleAction() {
+        getAudioContext(); // Enable audio on user interaction
+
+        if (currentState === STATES.READY) {
+          currentState = STATES.PLAYING;
+          bird.flap();
+        } else if (currentState === STATES.PLAYING) {
+          bird.flap();
+        } else if (currentState === STATES.GAME_OVER) {
+          resetGame();
+        }
+      }
+
+      // --- Event Listeners ---
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+          e.preventDefault();
+          handleAction();
+        }
+      });
+
+      canvas.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        handleAction();
+      });
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handleAction();
+      }, { passive: false });
+
+      // --- Fixed-Timestep Physics Loop (Ensures consistent speed on 60Hz, 120Hz, 144Hz screens) ---
+      let lastTime = 0;
+      const FIXED_STEP_MS = 1000 / 60; // 60 FPS standard physics step (16.67ms)
+      let accumulator = 0;
+
+      function updatePhysicsStep() {
+        frames++;
+
+        updateEnvironment();
+
+        if (currentState === STATES.PLAYING) {
+          const hitGround = bird.update();
+          if (hitGround) {
+            triggerGameOver();
+          }
+
+          const hitPipe = pipes.update();
+          if (hitPipe) {
+            triggerGameOver();
+          }
+        }
+      }
+
+      function renderFrame() {
+        // Camera Shake effect if triggered
+        ctx.save();
+        if (shakeTime > 0) {
+          const offsetX = (Math.random() - 0.5) * 5;
+          const offsetY = (Math.random() - 0.5) * 5;
+          ctx.translate(offsetX, offsetY);
+          shakeTime--;
+        }
+
+        // Draw background, obstacles, ground, and effects
+        drawEnvironment();
+        pipes.draw();
+        drawGround();
+        updateAndDrawParticles();
+
+        if (currentState === STATES.READY) {
+          drawReadyScreen();
+        } else if (currentState === STATES.PLAYING) {
+          bird.draw();
+          drawPlayingHUD();
+        } else if (currentState === STATES.GAME_OVER) {
+          bird.draw();
+          drawGameOverScreen();
+        }
+
+        // White Impact Flash
+        if (flashAlpha > 0) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
+          ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+          flashAlpha = Math.max(0, flashAlpha - 0.07);
+        }
+
+        ctx.restore();
+      }
+
+      function gameLoop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        let delta = timestamp - lastTime;
+        lastTime = timestamp;
+
+        // Cap delta to prevent huge jumps if tab is inactive
+        if (delta > 100) delta = 100;
+        accumulator += delta;
+
+        // Process physics in fixed 60hz steps
+        while (accumulator >= FIXED_STEP_MS) {
+          updatePhysicsStep();
+          accumulator -= FIXED_STEP_MS;
+        }
+
+        renderFrame();
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Apply initial normal speed configuration & start loop
+      applySpeedConfig();
+      resetGame();
+      requestAnimationFrame(gameLoop);
+    })();
+  </script>
+</body>
+</html>

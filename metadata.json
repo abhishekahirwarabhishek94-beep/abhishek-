@@ -1,0 +1,6 @@
+{
+  "name": "Flappy Bird Clone",
+  "description": "A classic Flappy Bird arcade game built with HTML5 Canvas, physics, score tracking, and smooth animations in a single file.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
